@@ -20,7 +20,7 @@ int main() {
     while (connected) {
 
         if (!logged) {
-            if (!login_register(sock, message, &exit, &session_token, &login)) {
+            if (!login_register(sock, message, &exit, &session_token, login)) {
                 if(exit) break;
             } else {
                 printf("Vyber si operáciu: \n");
@@ -65,8 +65,9 @@ bool login_register(int sock, char message[1024],bool* exit,int* session_token, 
         login[strcspn(login, "\n")] = '\0';
         pwd[strcspn(pwd, "\n")] = '\0';
 
-        //TODO pwd zahashovať pred odoslaním
-        sprintf(message, "%s:%s:%s", operation,login,pwd);
+        char pwd_h[65];
+        hash_pwd(pwd,pwd_h);
+        sprintf(message, "%s:%s:%s", operation,login,pwd_h);
         send_message(sock, message);
 
         char* response = receive_message(sock);
@@ -91,21 +92,23 @@ bool login_register(int sock, char message[1024],bool* exit,int* session_token, 
             login[strcspn(login, "\n")] = '\0';
             pwd[strcspn(pwd, "\n")] = '\0';
 
-            //TODO pwd zahashovať pred odoslaním
-            sprintf(message, "%s:%s:%s", operation,login,pwd);
+            char pwd_h[65];
+            hash_pwd(pwd,pwd_h);
+            sprintf(message, "%s:%s:%s", operation,login,pwd_h);
+            printf("%s\n",message);
             send_message(sock, message);
 
             char* response = receive_message(sock);
-            if (strcmp(response,"SUCCESS") == 0) {
-                printf("Registrácia prebehla úspešne!\n");
-                //TODO po registrácii bude užívateľ prihlásený do systému
+            parse_response(response,&success,session_token);
+
+            if (success) {
+                printf("Úspešne si sa zaregistroval %s! session_token: %d \n",login,*session_token);
                 free(response);
                 return true;
-            } else if (strcmp(response,"FAIL") == 0) {
-                printf("Používateľ s daným loginom už existuje, skúste iný.\n");
-                free(response);
-                return false;
             }
+            printf("Register neúspešný! Login je obsadený.\n");
+            free(response);
+            return false;
         } else {
             printf("Heslá sa nezhodujú!\n");
         }
@@ -174,6 +177,20 @@ void parse_response(const char* response, bool* success, int* session_token) {
 
     *success = false;
     *session_token = -1;
+}
+
+
+void hash_pwd(const char *input, char *output) {
+    unsigned char hash[SHA256_DIGEST_LENGTH];
+    SHA256_CTX sha256;
+    SHA256_Init(&sha256);
+    SHA256_Update(&sha256, input, strlen(input));
+    SHA256_Final(hash, &sha256);
+
+    for (int i = 0; i < SHA256_DIGEST_LENGTH; i++) {
+        sprintf(output + (i * 2), "%02x", hash[i]);
+    }
+    output[64] = '\0';
 }
 
 // Vytvorenie socketu

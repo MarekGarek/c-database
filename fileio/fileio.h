@@ -5,11 +5,15 @@
 #include <stdio.h>
 #include "../structures/array_list.h"
 #include "../user/user.h"
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 _Bool load_registered_users(array_list* users);
+void save_registered_user(const char* username, const char* password);
 
-// _Bool save_registered_users();
-//
 // _Bool create_user_table();
 // _Bool delete_user_table();
 //

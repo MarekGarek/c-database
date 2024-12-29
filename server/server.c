@@ -48,7 +48,6 @@ void handle_login_register(char * buffer, char* response) {
             snprintf(response, 100, "FAIL");
         }
     } else if(strcmp(parts[0], "register") == 0) {
-        //TODO Not implemented
         if(register_user(parts[1], parts[2], &token)) {
             snprintf(response, 100, "SUCCESS:%d", token);
         } else {

@@ -58,7 +58,19 @@ bool logout_user(int token, const char* username) {
 }
 
 bool register_user(const char *username, const char *password, int* token) {
-
+    if(username_exists(username)) {
+        return false;
+    }
+    //zapis do filu
+    save_registered_user(username, password);
+    //pridanie do zoznamu reg.
+    User* user = (User*)malloc(sizeof(User));
+    strcpy(user->username,username);
+    strcpy(user->password,password);
+    user->session_token = 0;
+    array_list_add(&registered_users, &user);
+    //zavolať login
+    return login_user(username,password,token);
 }
 
 _Bool find_logged_user(const char * username, User** user) {

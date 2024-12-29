@@ -6,8 +6,8 @@
 #include <string.h>
 
 typedef struct User {
-    char username[20];
-    char password[20];
+    char username[100];
+    char password[100];
     int session_token;
 } User;
 

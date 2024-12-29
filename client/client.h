@@ -8,6 +8,7 @@
 #include <arpa/inet.h>
 #include <sys/socket.h>
 #include <stdbool.h>
+#include <openssl/sha.h>
 
 
 #define PORT 8080
@@ -21,6 +22,7 @@ char* receive_message(int sock);
 _Bool login_register(int sock, char message[1024],bool* exit,int* session_token, char* login);
 _Bool tab_logout_unregister(int sock, bool *logged, char message[1024], int session_token, char login[20]);
 void parse_response(const char* response, bool* success, int* session_token);
+void hash_pwd(const char* input, char* output);
 
 // void user_register();
 // void user_unregister();

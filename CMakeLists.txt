@@ -4,6 +4,7 @@ project(semestralka C)
 set(CMAKE_C_STANDARD 11)
 
 find_package(Threads REQUIRED)
+find_package(OpenSSL REQUIRED)
 
 set(COMMON_SOURCES
         structures/linked_list.c
@@ -25,22 +26,25 @@ add_executable(server
         ${COMMON_SOURCES}
         server/server.c
 )
-target_link_libraries(server Threads::Threads)
+target_link_libraries(server Threads::Threads OpenSSL::SSL OpenSSL::Crypto)
+
 # Client 1
 add_executable(client1
         ${COMMON_SOURCES}
         client/client.c
 )
-target_link_libraries(client1 Threads::Threads)
+target_link_libraries(client1 Threads::Threads OpenSSL::SSL OpenSSL::Crypto)
+
 # Client 2
 add_executable(client2
         ${COMMON_SOURCES}
         client/client.c
 )
-target_link_libraries(client2 Threads::Threads)
+target_link_libraries(client2 Threads::Threads OpenSSL::SSL OpenSSL::Crypto)
+
 # Client 3
 add_executable(client3
         ${COMMON_SOURCES}
         client/client.c
 )
-target_link_libraries(client3 Threads::Threads)
+target_link_libraries(client3 Threads::Threads OpenSSL::SSL OpenSSL::Crypto)

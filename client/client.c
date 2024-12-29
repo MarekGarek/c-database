@@ -1,6 +1,5 @@
 #include "client.h"
 
-// Hlavná funkcia
 int main() {
     int sock;
     struct sockaddr_in serv_addr;
@@ -9,79 +8,29 @@ int main() {
 
     printf("Pripojený k serveru. Vyber operáciu:\n");
     bool connected = true;
-
+    bool logged = false;
     char message[BUFFER_SIZE];
-    char operation[10];
+    bool exit = false;
+
+    //credentials
+    int session_token = 0;
     char login[20];
-    char pwd[20];
-    char pwd2[20];
+    bool success = false;
 
-    //TODO refactor do login_register metódy
     while (connected) {
-        printf("'exit' 'login' 'register'\n");
-        fgets(operation, BUFFER_SIZE, stdin);
-        operation[strcspn(operation, "\n")] = '\0';
 
-        if (strcmp(operation, "exit") == 0) {
-            printf("Ukončujem spojenie so serverom...\n");
-            break;
-        } else if (strcmp(operation, "login") == 0) {
-            printf("Zadaj login: \n");
-            fgets(login, BUFFER_SIZE, stdin);
-            printf("Zadaj heslo: \n");
-            fgets(pwd, BUFFER_SIZE, stdin);
-
-            login[strcspn(login, "\n")] = '\0';
-            pwd[strcspn(pwd, "\n")] = '\0';
-            //TODO pwd zahashovať pred odoslaním
-            sprintf(message, "%s:%s:%s", operation,login,pwd);
-            send_message(sock, message);
-
-
-
-
-            char* response = receive_message(sock);
-            printf("%s\n", response);
-            //TODO
-            // parse response token ulozit
-
-
-
-
-            if (strcmp(response,"SUCCESS") == 0) {
-                printf("Login úspešný!\n");
-                //TODO logika pracovania na serveri / dalsi nekonecny while
-            } else if (strcmp(response,"FAIL") == 0) {
-                printf("Login neúspešný!\n");
-            }
-            free(response);
-        } else if (strcmp(operation, "register") == 0) {
-            printf("Zadaj login: \n");
-            fgets(login, BUFFER_SIZE, stdin);
-            printf("Zadaj heslo: \n");
-            fgets(pwd, BUFFER_SIZE, stdin);
-            printf("Zopakuj heslo: \n");
-            fgets(pwd2, BUFFER_SIZE, stdin);
-            if(strcmp(pwd,pwd2) == 0) {
-                login[strcspn(login, "\n")] = '\0';
-                pwd[strcspn(pwd, "\n")] = '\0';
-
-                //TODO pwd zahashovať pred odoslaním
-                sprintf(message, "%s:%s:%s", operation,login,pwd);
-                send_message(sock, message);
-
-                char* response = receive_message(sock);
-                if (strcmp(response,"SUCCESS") == 0) {
-                    printf("Registrácia prebehla úspešne!\n");
-                    //TODO po registrácii bude užívateľ prihlásený do systému
-                    //TODO logika pracovania na serveri / dalsi nekonecny while
-                } else if (strcmp(response,"FAIL") == 0) {
-                    printf("Používateľ s daným loginom už existuje, skúste iný.\n");
-                }
-                free(response);
+        if (!logged) {
+            if (!login_register(sock, message, &exit, &session_token, &login)) {
+                if(exit) break;
             } else {
-                printf("Heslá sa nezhodujú!\n");
+                printf("Vyber si operáciu: \n");
+                fflush(stdout);
+                logged = true;
             }
+        }
+
+        if (logged) {
+            tab_logout_unregister(sock, &logged, message, session_token, login);
         }
 
         if (send(sock, "", 0, MSG_NOSIGNAL) == -1) {
@@ -92,6 +41,139 @@ int main() {
 
     close(sock);
     return 0;
+}
+
+bool login_register(int sock, char message[1024],bool* exit,int* session_token, char* login) {
+    char operation[20];
+    char pwd[20];
+    char pwd2[20];
+    bool success = false;
+
+    printf("'exit' 'login' 'register'\n");
+    fgets(operation, 20, stdin);
+    operation[strcspn(operation, "\n")] = '\0';
+
+    if (strcmp(operation, "exit") == 0) {
+        printf("Ukončujem spojenie so serverom...\n");
+        *exit = true;
+        return false;
+    } else if (strcmp(operation, "login") == 0) {
+        printf("Zadaj login: \n");
+        fgets(login, 20, stdin);
+        printf("Zadaj heslo: \n");
+        fgets(pwd, 20, stdin);
+        login[strcspn(login, "\n")] = '\0';
+        pwd[strcspn(pwd, "\n")] = '\0';
+
+        //TODO pwd zahashovať pred odoslaním
+        sprintf(message, "%s:%s:%s", operation,login,pwd);
+        send_message(sock, message);
+
+        char* response = receive_message(sock);
+        parse_response(response,&success,session_token);
+
+        if (success) {
+            printf("Úspešne si sa prihlásil %s! session_token: %d \n",login,*session_token);
+            free(response);
+            return true;
+        }
+        printf("Login neúspešný!\n");
+        free(response);
+        return false;
+    } else if (strcmp(operation, "register") == 0) {
+        printf("Zadaj login: \n");
+        fgets(login, 20, stdin);
+        printf("Zadaj heslo: \n");
+        fgets(pwd, 20, stdin);
+        printf("Zopakuj heslo: \n");
+        fgets(pwd2, 20, stdin);
+        if(strcmp(pwd,pwd2) == 0) {
+            login[strcspn(login, "\n")] = '\0';
+            pwd[strcspn(pwd, "\n")] = '\0';
+
+            //TODO pwd zahashovať pred odoslaním
+            sprintf(message, "%s:%s:%s", operation,login,pwd);
+            send_message(sock, message);
+
+            char* response = receive_message(sock);
+            if (strcmp(response,"SUCCESS") == 0) {
+                printf("Registrácia prebehla úspešne!\n");
+                //TODO po registrácii bude užívateľ prihlásený do systému
+                free(response);
+                return true;
+            } else if (strcmp(response,"FAIL") == 0) {
+                printf("Používateľ s daným loginom už existuje, skúste iný.\n");
+                free(response);
+                return false;
+            }
+        } else {
+            printf("Heslá sa nezhodujú!\n");
+        }
+    }
+    return false;
+}
+
+_Bool tab_logout_unregister(int sock, bool *logged, char message[1024], int session_token, char login[20]) {
+    bool success = false;
+    char operation[20];
+    printf("'tab' 'logout' 'unregister'\n");
+    fgets(operation, BUFFER_SIZE, stdin);
+    operation[strcspn(operation, "\n")] = '\0';
+    if (strcmp(operation, "tab") == 0) {
+        //TODO vypíše userove tabuľky + operácie
+        // 'new_tab' 'delete_tab' 'open_tab' 'go_back'
+        //   |_ 'name'                |_ 'modify' 'show'
+        //   |_ 'columns'                   |       |_ 'show' 'order by' 'contain_str'
+        //   |_ 'go_back'                   |
+        //                                  |_ 'add_record' 'delete_record' 'save'
+    } else if (strcmp(operation, "logout") == 0) {
+        sprintf(message, "%s:%d:%s", operation,session_token,login);
+        //printf("[DEBUG] message for logout: %s\n", message);
+        send_message(sock, message);
+
+        char* response = receive_message(sock);
+        parse_response(response,&success,&session_token);
+
+        if (success) {
+            printf("Úspešne si sa odhlásil!\n");
+            free(response);
+            *logged = false;
+            return true;
+        }
+        printf("Logout neúspešný!\n");
+        free(response);
+        return false;
+    } else if (strcmp(operation, "unregister") == 0) {
+
+    }
+    return false;
+}
+
+void parse_response(const char* response, bool* success, int* session_token) {
+    char buffer[256];
+    strncpy(buffer, response, sizeof(buffer) - 1);
+    buffer[sizeof(buffer) - 1] = '\0';
+    char* token = strtok(buffer, ":");
+
+    if (strcmp(token, "FAIL") == 0) {
+        *success = false;
+        *session_token = -1;
+        return;
+    }
+
+    if (strcmp(token, "SUCCESS") == 0) {
+        *success = true;
+        token = strtok(NULL, ":");
+        if (token != NULL) {
+            *session_token = atoi(token);
+        } else {
+            *session_token = -1;
+        }
+        return;
+    }
+
+    *success = false;
+    *session_token = -1;
 }
 
 // Vytvorenie socketu

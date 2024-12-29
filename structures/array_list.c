@@ -43,6 +43,20 @@ void array_list_add(array_list* this, const void* value) {
     this->size_++;
 }
 
+_Bool array_list_remove(array_list *this, int index) {
+    if (index < 0 || index >= this->size_) {
+        return false;
+    }
+
+    char* start = (char*)this->array_ + index * this->element_size_;
+    char* next = start + this->element_size_;
+    size_t bytes_to_move = (this->size_ - index - 1) * this->element_size_;
+
+    memmove(start, next, bytes_to_move);
+    this->size_--;
+    return true;
+}
+
 _Bool array_list_try_get(const array_list* this, int index, void* value) {
     if (index <0 || index >= this->size_) {
         return false;

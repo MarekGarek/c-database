@@ -18,6 +18,9 @@ int create_client_socket();
 void connect_to_server(int sock, struct sockaddr_in *serv_addr);
 void send_message(int sock, const char *message);
 char* receive_message(int sock);
+_Bool login_register(int sock, char message[1024],bool* exit,int* session_token, char* login);
+_Bool tab_logout_unregister(int sock, bool *logged, char message[1024], int session_token, char login[20]);
+void parse_response(const char* response, bool* success, int* session_token);
 
 // void user_register();
 // void user_unregister();

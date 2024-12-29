@@ -8,9 +8,6 @@ void server_user_init() {
     array_list_init(&logged_users,sizeof(User*));
 
     load_registered_users(&registered_users);
-    // if(is_user_registered("Marek14")) {
-    //     printf("is registered - Marek14\n");
-    // }
 }
 
 void server_user_destroy() {
@@ -25,7 +22,9 @@ void server_user_destroy() {
 }
 
 bool login_user(const char *username, const char *password, int* token) {
-    if(!username_exists(username)) {
+    User* u = NULL;
+    //username neexistuje alebo je uz prihlaseny
+    if(find_logged_user(username,&u) || !username_exists(username)) {
         return false;
     }
 
@@ -34,17 +33,47 @@ bool login_user(const char *username, const char *password, int* token) {
         *token = rand() % INT_MAX;
         User* user = (User*)malloc(sizeof(User));
         strcpy(user->username,username);
+        strcpy(user->password,password);
         user->session_token = *token;
-        //TODO FREE USER
-        array_list_add(&logged_users, user); //&user
+        array_list_add(&logged_users, &user);
         return true;
     }
 
     return false;
 }
 
+bool logout_user(int token, const char* username) {
+    User* user = NULL;
+    if(find_logged_user(username, &user)) {
+        for(int i = 0; i < array_list_get_size(&logged_users); i++) {
+            User* pomUser = NULL;
+            array_list_try_get(&logged_users, i, &pomUser);
+            if (strcmp(pomUser->username, username) == 0) {
+                free(user);
+                array_list_remove(&logged_users, i);
+                return true;
+            }
+        }
+    }
+}
+
 bool register_user(const char *username, const char *password, int* token) {
 
+}
+
+_Bool find_logged_user(const char * username, User** user) {
+    if (array_list_get_size(&logged_users) != 0) {
+        for (int i = 0; i < array_list_get_size(&logged_users); i++) {
+            User* pomUser = NULL;
+            array_list_try_get(&logged_users, i, &pomUser);
+            if (strcmp(pomUser->username, username) == 0) {
+                *user = pomUser;
+                return true;
+            }
+        }
+    }
+    *user = NULL;
+    return false;
 }
 
 //skontroluje ci uz username existuje

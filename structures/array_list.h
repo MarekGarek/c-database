@@ -20,6 +20,7 @@ void array_list_clear(array_list* this);
 
 int array_list_get_size(const array_list* this);
 void array_list_add(array_list* this, const void* value);
+_Bool array_list_remove(array_list* this, int index);
 _Bool array_list_try_get(const array_list* this, int index, void* value);
 _Bool array_list_try_set(array_list* this, int index, const void* value);
 void array_list_assign(array_list* this, const array_list* other);

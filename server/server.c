@@ -35,8 +35,10 @@ int main() {
 
 void handle_login_register(char * buffer, char* response) {
     //printf("Správa od klienta: %s\n", buffer);
-    char* parts[3];
-    parse_message(buffer, parts, 3);
+    //TODO parts[5] , 5 moze byt niekde                   #define PARTS_COUNT 5
+    // nastaviť podľa toho aké správy sa budú posielať z klienta, kolko ich bude oddelenych delimetrom : (zatial mi staci 3)
+    char* parts[5];
+    parse_message(buffer, parts, 5);
 
     int token = 0;
     if(strcmp(parts[0], "login") == 0) {
@@ -46,11 +48,25 @@ void handle_login_register(char * buffer, char* response) {
             snprintf(response, 100, "FAIL");
         }
     } else if(strcmp(parts[0], "register") == 0) {
+        //TODO Not implemented
         if(register_user(parts[1], parts[2], &token)) {
             snprintf(response, 100, "SUCCESS:%d", token);
         } else {
             snprintf(response, 100, "FAIL");
         }
+    } else if(strcmp(parts[0], "tab") == 0) {
+        //TODO Not implemented
+    } else if(strcmp(parts[0], "logout") == 0) {
+
+        if(logout_user(atoi(parts[1]), parts[2])) {           //token,username
+            snprintf(response, 100, "SUCCESS");
+        } else {
+            snprintf(response, 100, "FAIL");
+        }
+
+
+    } else if(strcmp(parts[0], "unregister") == 0) {
+        //TODO Not implemented
     }
 
     //printf("Response: %s\n", response);

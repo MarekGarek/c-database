@@ -56,16 +56,17 @@ void handle_login_register(char * buffer, char* response) {
     } else if(strcmp(parts[0], "tab") == 0) {
         //TODO Not implemented
     } else if(strcmp(parts[0], "logout") == 0) {
-
         if(logout_user(atoi(parts[1]), parts[2])) {           //token,username
             snprintf(response, 100, "SUCCESS");
         } else {
             snprintf(response, 100, "FAIL");
         }
-
-
     } else if(strcmp(parts[0], "unregister") == 0) {
-        //TODO Not implemented
+        if(unregister_user(atoi(parts[1]), parts[2])) {           //token,username
+            snprintf(response, 100, "SUCCESS");
+        } else {
+            snprintf(response, 100, "FAIL");
+        }
     }
 
     //printf("Response: %s\n", response);

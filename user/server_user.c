@@ -42,20 +42,6 @@ bool login_user(const char *username, const char *password, int* token) {
     return false;
 }
 
-bool logout_user(int token, const char* username) {
-    User* user = NULL;
-    if(find_logged_user(username, &user)) {
-        for(int i = 0; i < array_list_get_size(&logged_users); i++) {
-            User* pomUser = NULL;
-            array_list_try_get(&logged_users, i, &pomUser);
-            if (strcmp(pomUser->username, username) == 0) {
-                free(user);
-                array_list_remove(&logged_users, i);
-                return true;
-            }
-        }
-    }
-}
 
 bool register_user(const char *username, const char *password, int* token) {
     if(username_exists(username)) {
@@ -107,6 +93,38 @@ _Bool check_credentials(const char *username,const char* password) {
         array_list_try_get(&registered_users, i, &user);
         if (strcmp(user->username, username) == 0 && strcmp(user->password, password) == 0) {
             return true;
+        }
+    }
+    return false;
+}
+
+bool logout_user(int token, const char* username) {
+    return validate_token(token,username) && remove_user(username,&logged_users);
+}
+
+bool unregister_user(int token, const char* username) {
+    return validate_token(token, username) && remove_user(username,&registered_users) && remove_registered_user(username);
+}
+
+bool validate_token(int token, const char* username) {
+    User* user = NULL;
+    if(find_logged_user(username, &user)) {
+        return user_validate_token(user, token);
+    }
+    return false;
+}
+
+bool remove_user(const char* username, array_list* array) {
+    User* user = NULL;
+    if(find_logged_user(username, &user)) {
+        for(int i = 0; i < array_list_get_size(array); i++) {
+            User* pomUser = NULL;
+            array_list_try_get(array, i, &pomUser);
+            if (strcmp(pomUser->username, username) == 0) {
+                free(user);
+                array_list_remove(array, i);
+                return true;
+            }
         }
     }
     return false;

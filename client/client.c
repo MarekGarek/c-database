@@ -147,7 +147,21 @@ _Bool tab_logout_unregister(int sock, bool *logged, char message[1024], int sess
         free(response);
         return false;
     } else if (strcmp(operation, "unregister") == 0) {
+        sprintf(message, "%s:%d:%s", operation,session_token,login);
+        send_message(sock, message);
 
+        char* response = receive_message(sock);
+        parse_response(response,&success,&session_token);
+
+        if (success) {
+            printf("Úspešne si sa odregistroval!\n");
+            free(response);
+            *logged = false;
+            return true;
+        }
+        printf("Unregister neúspešný!\n");
+        free(response);
+        return false;
     }
     return false;
 }
